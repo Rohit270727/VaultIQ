@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultIQ - Setup 2FA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#38bdf8">
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <h1>🔐 VaultIQ</h1>
+      <p>Set Up Two-Factor Authentication</p>
+    </div>
+
+    <p style="font-size:13px; color:#94a3b8; margin-bottom:14px; text-align:center;">
+      Scan this QR code with Google Authenticator or Authy
+    </p>
+
+    <img src="data:image/png;base64,{{ qr_b64 }}" style="display:block; margin:0 auto 16px; border-radius:8px; width:220px; height:220px; max-width:100%;">
+    <p style="font-size:12px; color:#64748b; margin-bottom:20px; text-align:center;">
+      Or enter manually: <code>{{ secret }}</code>
+    </p>
+
+    <a href="/verify-2fa" style="text-decoration:none;">
+      <button type="button">I've scanned it — Continue</button>
+    </a>
+  </div>
+</body>
+</html>

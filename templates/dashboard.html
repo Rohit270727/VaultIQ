@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultIQ - Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#38bdf8">
+</head>
+<body>
+  <div class="card dashboard-card">
+
+    <div class="logo">
+      <h1>🔐 VaultIQ</h1>
+      <p>Your Secure Vault</p>
+      <a href="/lock" class="lock-link">🔒 Lock Vault</a>
+      <button type="button" class="icon-btn theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+    </div>
+
+    <div class="health-widget">
+      <div class="health-ring" style="--score: {{ health.score }};">
+        <span class="health-number">{{ health.score }}</span>
+      </div>
+      <div class="health-stats">
+        <div class="health-stat weak"><b>{{ health.weak }}</b> weak</div>
+        <div class="health-stat reused"><b>{{ health.reused }}</b> reused</div>
+        <div class="health-stat old"><b>{{ health.old }}</b> old (90+ days)</div>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-bottom: 20px;">
+      <a href="/strength-checker" class="back-link">🔍 Check a password's strength →</a>
+    </div>
+
+    <div class="section-title">Add New Entry</div>
+    <form method="POST">
+      <input name="site" placeholder="Site name (e.g. Gmail)" required>
+      <input name="username" placeholder="Username / Email" required>
+      <div class="pw-input-row">
+        <input type="text" name="password" id="newPwField" placeholder="Password" required>
+        <button type="button" class="icon-btn gen-btn" onclick="generatePw()" title="Generate strong password">🎲</button>
+      </div>
+      <button type="submit">Add to Vault</button>
+    </form>
+
+    <div class="section-title">Saved Entries</div>
+<input type="text" id="searchBox" placeholder="🔍 Search by site name..." oninput="filterEntries()" style="margin-bottom: 14px;">
+
+    {% if entries|length == 0 %}
+    <div class="empty-state">
+      <div class="empty-icon">🗄️</div>
+      <p>No entries yet</p>
+      <span>Add your first password above to get started</span>
+    </div>
+    {% else %}
+    <div class="entry-list">
+      {% for id, site, username, pw, created_at, strength in entries %}
+<div class="entry-card" id="entry-{{ id }}" data-delay="{{ loop.index0 }}">
+  <div class="entry-favicon-fallback">{{ site[0]|upper }}</div>
+  <div class="entry-info">
+    <div class="entry-site">
+      {{ site }}
+      <span class="strength-badge {{ strength|lower }}">{{ strength }}</span>
+    </div>
+    <div class="entry-username">{{ username }}</div>
+    <div class="entry-pw">
+      <span class="pw-mask" id="pw-{{ id }}">••••••••</span>
+      <span class="pw-real" style="display:none;">{{ pw }}</span>
+    </div>
+  </div>
+  <div class="entry-actions">
+    <button type="button" class="icon-btn" onclick="toggleShow('{{ id }}')" title="Show/hide">👁️</button>
+    <button type="button" class="icon-btn" onclick="copyPw('{{ id }}', this)" title="Copy">📋</button>
+    <button type="button" class="icon-btn" onclick="confirmDelete('{{ id }}')" title="Delete">🗑️</button>
+  </div>
+</div>
+{% endfor %}
+    </div>
+    {% endif %}
+
+    <div id="toast-container"></div>
+
+  </div>
+
+  <script>
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      document.querySelector(".theme-toggle").textContent = theme === "light" ? "☀️" : "🌙";
+    }
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+      localStorage.setItem("vaultiq-theme", current);
+      applyTheme(current);
+    }
+    applyTheme(localStorage.getItem("vaultiq-theme") || "dark");
+  </script>
+
+<script>
+  document.querySelectorAll(".entry-card").forEach(card => {
+    const i = parseInt(card.dataset.delay || "0");
+    card.style.animationDelay = (i * 0.05) + "s";
+  });
+</script>
+
+  <script>
+    async function generatePw() {
+      const res = await fetch("/generate");
+      const pw = await res.text();
+      document.getElementById("newPwField").value = pw;
+    }
+  </script>
+
+  <script>
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "toast toast-" + type;
+      toast.textContent = message;
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("toast-show"));
+      setTimeout(() => {
+        toast.classList.remove("toast-show");
+        setTimeout(() => toast.remove(), 250);
+      }, 2200);
+    }
+
+   function filterEntries() {
+    const query = document.getElementById("searchBox").value.toLowerCase();
+    document.querySelectorAll(".entry-card").forEach(card => {
+    const site = card.querySelector(".entry-site").textContent.toLowerCase();
+    card.style.display = site.includes(query) ? "flex" : "none";
+    });
+   }
+
+    function toggleShow(id) {
+      const card = document.getElementById("entry-" + id);
+      const mask = card.querySelector(".pw-mask");
+      const real = card.querySelector(".pw-real");
+      const showing = real.style.display !== "none";
+      mask.style.display = showing ? "inline" : "none";
+      real.style.display = showing ? "none" : "inline";
+    }
+
+    function copyPw(id, btn) {
+      const card = document.getElementById("entry-" + id);
+      const real = card.querySelector(".pw-real").textContent;
+      navigator.clipboard.writeText(real);
+      const original = btn.textContent;
+      btn.textContent = "✅";
+      setTimeout(() => { btn.textContent = original; }, 1200);
+      showToast("Password copied to clipboard");
+      
+    }
+
+    function confirmDelete(id) {
+      if (confirm("Delete this entry? This can't be undone.")) {
+        window.location.href = "/delete/" + id;
+      }
+    }
+  </script>
+
+{% if just_added %}
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    showToast("Password added to vault");
+  });
+</script>
+{% endif %}
+
+  <script>
+    let inactivityTimer;
+    const LOCK_AFTER_MS = 5 * 60 * 1000; // 5 minutes
+
+    function resetTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        window.location.href = "/lock";
+      }, LOCK_AFTER_MS);
+    }
+
+    ["mousemove", "keydown", "click", "scroll"].forEach(evt => {
+      document.addEventListener(evt, resetTimer);
+    });
+
+    resetTimer();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}");
+    }
+  </script>
+</body>
+</html>

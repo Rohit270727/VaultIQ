@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultIQ - Audit Log</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="card dashboard-card">
+    <div class="logo"><h1>📜 Audit Log</h1><a href="/dashboard" class="back-link">← Back to Vault</a></div>
+    <div class="entry-list">
+      {% for action, detail, ip, ts in logs %}
+      <div class="entry-card">
+        <div class="entry-info">
+          <div class="entry-site">{{ action }} {% if detail %}— {{ detail }}{% endif %}</div>
+          <div class="entry-username">{{ ip }} · {{ ts }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>

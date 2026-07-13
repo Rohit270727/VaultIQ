@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultIQ - Strength Checker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#38bdf8">
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <h1>🔍 VaultIQ</h1>
+      <p>Check Your Password Strength</p>
+    </div>
+
+    <input type="text" id="pwInput" placeholder="Type a password to check..." autofocus>
+
+    <div class="meter-wrap">
+      <div class="meter-bar" id="meterBar"></div>
+    </div>
+    <div id="strengthLabel" class="strength-badge" style="display:none;"></div>
+
+    <ul id="suggestionsList" class="suggestions"></ul>
+    <div id="breachBox" style="display:none;"></div>
+
+    <a href="/" class="back-link">← Back to Vault</a>
+  </div>
+
+  <script>
+    const pwInput = document.getElementById("pwInput");
+    const meterBar = document.getElementById("meterBar");
+    const strengthLabel = document.getElementById("strengthLabel");
+    const suggestionsList = document.getElementById("suggestionsList");
+
+    pwInput.addEventListener("input", async () => {
+      const password = pwInput.value;
+      if (!password) {
+        meterBar.style.width = "0%";
+        strengthLabel.style.display = "none";
+        suggestionsList.innerHTML = "";
+        return;
+      }
+
+      const res = await fetch("/check-strength", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+
+      strengthLabel.style.display = "inline-block";
+      strengthLabel.textContent = data.strength;
+      strengthLabel.className = "strength-badge " + data.strength.toLowerCase();
+
+      let pct = Math.min((data.entropy / 80) * 100, 100);
+      meterBar.style.width = pct + "%";
+      meterBar.className = "meter-bar " + data.strength.toLowerCase();
+
+      suggestionsList.innerHTML = "";
+      data.suggestions.forEach(s => {
+        const li = document.createElement("li");
+        li.textContent = s;
+        suggestionsList.appendChild(li);
+      });
+
+      const breachBox = document.getElementById("breachBox");
+      if (data.breach_count === null) {
+        breachBox.style.display = "none";
+      } else if (data.breach_count > 0) {
+        breachBox.style.display = "block";
+        breachBox.className = "error-msg";
+        breachBox.textContent = `⚠️ This password has appeared in ${data.breach_count.toLocaleString()} known data breaches. Avoid using it.`;
+      } else {
+        breachBox.style.display = "block";
+        breachBox.className = "success-msg";
+        breachBox.textContent = "✅ Good news — this password was not found in any known breach.";
+      }
+    });
+  </script>
+</body>
+</html>

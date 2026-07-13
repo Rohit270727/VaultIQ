@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultIQ</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#38bdf8">
+</head>
+<body>
+  <div class="card {{ 'shake' if error }}">
+    <div class="logo">
+      <h1>🔐 VaultIQ</h1>
+      <p>Password Strength Analyzer & Secure Vault</p>
+    </div>
+
+    {% if error %}
+    <div class="error-msg">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <input type="password" name="password" placeholder="Master password" required autofocus>
+      <button type="submit">{{ "Create Vault" if first_time else "Unlock Vault" }}</button>
+    </form>
+  </div>
+</body>
+</html>

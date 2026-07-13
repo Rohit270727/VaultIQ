@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultIQ - Verify 2FA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#38bdf8">
+</head>
+<body>
+  <div class="card {{ 'shake' if error }}">
+    <div class="logo">
+      <h1>🔐 VaultIQ</h1>
+      <p>Enter your 6-digit authenticator code</p>
+    </div>
+
+    {% if error %}
+    <div class="error-msg">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <input type="text" name="code" placeholder="123456" maxlength="6" required autofocus>
+      <button type="submit">Verify</button>
+    </form>
+  </div>
+</body>
+</html>
