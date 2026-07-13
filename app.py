@@ -15,7 +15,7 @@ from flask_limiter.util import get_remote_address
 from api import api
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 app.config["JWT_SECRET_KEY"] = os.urandom(24)
 jwt = JWTManager(app)
 app.register_blueprint(api)
